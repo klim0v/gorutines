@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 func main() {
@@ -17,12 +18,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	wg := new(sync.WaitGroup)
 	for _, line := range lines {
-		handleUrl(line)
+		wg.Add(1)
+		go handleUrl(line, wg)
 	}
+	wg.Wait()
 }
 
-func handleUrl(line string) {
+func handleUrl(line string, waiteGroup *sync.WaitGroup) {
+	defer waiteGroup.Done()
 	resp, err := http.Get(line)
 	if err != nil {
 		log.Fatal(err)
