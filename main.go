@@ -13,17 +13,28 @@ import (
 )
 
 func main() {
-	lines, err := getUrls()
+	file, err := getFile()
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer file.Close()
 
 	wg := new(sync.WaitGroup)
-	for _, line := range lines {
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
 		wg.Add(1)
-		go handleUrl(line, wg)
+		go handleUrl(scanner.Text(), wg)
 	}
 	wg.Wait()
+}
+
+func getFile() (file *os.File, err error) {
+	filePath := filepath.Join(".", "urls.txt")
+	file, err = os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
 }
 
 func handleUrl(line string, waiteGroup *sync.WaitGroup) {
@@ -41,18 +52,4 @@ func handleUrl(line string, waiteGroup *sync.WaitGroup) {
 		}
 		fmt.Println(fmt.Sprintf("Count for %s: %d", line, strings.Count(string(bytes), "Go")))
 	}
-}
-
-func getUrls() (lines []string, err error) {
-	filePath := filepath.Join(".", "urls.txt")
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	return lines, nil
 }
