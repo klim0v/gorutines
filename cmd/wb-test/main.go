@@ -32,9 +32,12 @@ func main() {
 		go sendToPipeline(scanner.Text(), out, limit, &wg)
 	}
 	wg.Done()
+	var total int
 	for res := range out {
 		fmt.Println(fmt.Sprintf("Count for %s: %d", res.Url, res.Count))
+		total += res.Count
 	}
+	fmt.Println(fmt.Sprintf("Total: %d", total))
 }
 
 func sendToPipeline(line string, out chan<- Result, limit chan interface{}, wg *sync.WaitGroup) {
