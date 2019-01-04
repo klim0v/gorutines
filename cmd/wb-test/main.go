@@ -22,17 +22,23 @@ func main() {
 	out := make(chan Result)
 
 	limit := make(chan interface{}, 5)
-	wg.Add(1)
+	done := make(chan interface{})
+	go printFromPiplineAndDone(out, done)
 	go func() {
 		wg.Wait()
 		close(out)
 	}()
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
+		limit <- struct{}{}
 		wg.Add(1)
 		go sendToPipeline(scanner.Text(), out, limit, &wg)
 	}
-	wg.Done()
+	<-done
+}
+
+func printFromPiplineAndDone(out <-chan Result, done chan<- interface{}) {
+	defer func() { done <- struct{}{} }()
 	var total int
 	for res := range out {
 		fmt.Println(fmt.Sprintf("Count for %s: %d", res.Url, res.Count))
@@ -43,10 +49,7 @@ func main() {
 
 func sendToPipeline(line string, out chan<- Result, limit chan interface{}, wg *sync.WaitGroup) {
 	defer wg.Done()
-	defer func() {
-		<-limit
-	}()
-	limit <- struct{}{}
+	defer func() { <-limit }()
 	count, err := countQuantity(line)
 	if err != nil {
 		log.Println(err)
