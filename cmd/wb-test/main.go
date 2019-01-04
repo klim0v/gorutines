@@ -51,7 +51,7 @@ func printFromPiplineAndDone(out <-chan Result, done chan<- interface{}) {
 	fmt.Println(fmt.Sprintf("Total: %d", total))
 }
 
-func sendToPipeline(line string, out chan<- Result, limit chan interface{}, wg *sync.WaitGroup) {
+func sendToPipeline(line string, out chan<- Result, limit <-chan interface{}, wg *sync.WaitGroup) {
 	defer wg.Done()
 	defer func() { <-limit }()
 	count, err := countQuantity(line)
