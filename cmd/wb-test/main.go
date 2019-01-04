@@ -24,6 +24,8 @@ func main() {
 	limit := make(chan interface{}, 5)
 	done := make(chan interface{})
 	go printFromPiplineAndDone(out, done)
+
+	wg.Add(1)
 	go func() {
 		wg.Wait()
 		close(out)
@@ -34,6 +36,8 @@ func main() {
 		wg.Add(1)
 		go sendToPipeline(scanner.Text(), out, limit, &wg)
 	}
+	wg.Done()
+
 	<-done
 }
 
