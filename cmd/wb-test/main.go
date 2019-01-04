@@ -19,7 +19,7 @@ type Result struct {
 
 func main() {
 	var wg sync.WaitGroup
-	out := make(chan Result, 100)
+	out := make(chan Result)
 
 	limit := make(chan interface{}, 5)
 	wg.Add(1)
