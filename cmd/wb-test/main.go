@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Result struct {
@@ -18,7 +19,7 @@ type Result struct {
 
 func main() {
 	var wg sync.WaitGroup
-	out := make(chan Result)
+	out := make(chan Result, 100)
 
 	limit := make(chan interface{}, 5)
 	wg.Add(1)
@@ -46,13 +47,22 @@ func sendToPipeline(line string, out chan<- Result, limit chan interface{}, wg *
 		<-limit
 	}()
 	limit <- struct{}{}
-	out <- countQuantity(line)
-}
-
-func countQuantity(url string) (res Result) {
-	resp, err := http.Get(url)
+	count, err := countQuantity(line)
 	if err != nil {
 		log.Println(err)
+		return
+	}
+	result := Result{Url: line, Count: count}
+	out <- result
+}
+
+func countQuantity(url string) (int, error) {
+	var netClient = &http.Client{
+		Timeout: time.Second * 10,
+	}
+	resp, err := netClient.Get(url)
+	if err != nil {
+		return 0, err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -61,9 +71,7 @@ func countQuantity(url string) (res Result) {
 	}()
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Println(err)
+		return 0, err
 	}
-	res.Url = url
-	res.Count = strings.Count(string(bytes), "Go")
-	return
+	return strings.Count(string(bytes), "Go"), nil
 }
