@@ -23,7 +23,7 @@ func main() {
 
 	limit := make(chan interface{}, 5)
 	done := make(chan interface{})
-	go printFromPiplineAndDone(out, done)
+	go printFromPipelineAndDone(out, done)
 
 	wg.Add(1)
 	go func() {
@@ -41,7 +41,7 @@ func main() {
 	<-done
 }
 
-func printFromPiplineAndDone(out <-chan Result, done chan<- interface{}) {
+func printFromPipelineAndDone(out <-chan Result, done chan<- interface{}) {
 	defer func() { done <- struct{}{} }()
 	var total int
 	for res := range out {
