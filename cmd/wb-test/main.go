@@ -21,8 +21,8 @@ func main() {
 	var wg sync.WaitGroup
 	out := make(chan Result)
 
-	limit := make(chan interface{}, 5)
-	done := make(chan interface{})
+	limit := make(chan struct{}, 5)
+	done := make(chan struct{})
 	go printFromPipelineAndDone(out, done)
 
 	wg.Add(1)
@@ -41,7 +41,7 @@ func main() {
 	<-done
 }
 
-func printFromPipelineAndDone(out <-chan Result, done chan<- interface{}) {
+func printFromPipelineAndDone(out <-chan Result, done chan<- struct{}) {
 	defer func() { done <- struct{}{} }()
 	var total int
 	for res := range out {
@@ -51,7 +51,7 @@ func printFromPipelineAndDone(out <-chan Result, done chan<- interface{}) {
 	fmt.Println(fmt.Sprintf("Total: %d", total))
 }
 
-func sendToPipeline(line string, out chan<- Result, limit <-chan interface{}, wg *sync.WaitGroup) {
+func sendToPipeline(line string, out chan<- Result, limit <-chan struct{}, wg *sync.WaitGroup) {
 	defer wg.Done()
 	defer func() { <-limit }()
 	count, err := countQuantity(line)
