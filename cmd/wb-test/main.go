@@ -26,10 +26,6 @@ func main() {
 	go printFromPipelineAndDone(out, done)
 
 	wg.Add(1)
-	go func() {
-		wg.Wait()
-		close(out)
-	}()
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		limit <- struct{}{}
@@ -37,6 +33,8 @@ func main() {
 		go sendToPipeline(scanner.Text(), out, limit, &wg)
 	}
 	wg.Done()
+	wg.Wait()
+	close(out)
 
 	<-done
 }
